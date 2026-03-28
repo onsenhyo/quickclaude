@@ -1,5 +1,6 @@
 # quickclaude
 
+CLI launcher for Claude Code.
 Quickly launch Claude Code in your project directories.
 
 ```
