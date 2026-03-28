@@ -1,0 +1,22 @@
+{
+  "name": "quickclaude",
+  "version": "1.0.0",
+  "description": "Quickly launch Claude Code in your project directories",
+  "type": "module",
+  "bin": {
+    "quickclaude": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "claude",
+    "cli",
+    "launcher"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^1.1.0"
+  }
+}
