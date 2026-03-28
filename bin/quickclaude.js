@@ -75,12 +75,12 @@ async function main() {
   const projects = getProjects();
 
   if (projects.length === 0) {
-    p.cancel("Claude 프로젝트를 찾을 수 없습니다.");
+    p.cancel("No Claude projects found.");
     process.exit(1);
   }
 
   const selected = await p.select({
-    message: "프로젝트를 선택하세요",
+    message: "Select a project",
     options: projects.map((proj) => ({
       value: proj.path,
       label: getProjectLabel(proj.path),
@@ -88,11 +88,11 @@ async function main() {
   });
 
   if (p.isCancel(selected)) {
-    p.cancel("취소됨");
+    p.cancel("Cancelled");
     process.exit(0);
   }
 
-  p.outro(`${selected} 에서 Claude 시작...`);
+  p.outro(`Launching Claude in ${selected}`);
 
   // claude 실행 (현재 터미널에서 interactive하게)
   const child = spawn("claude", [], {

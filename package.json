@@ -1,13 +1,13 @@
 {
   "name": "quickclaude",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Quickly launch Claude Code in your project directories",
   "type": "module",
   "bin": {
     "quickclaude": "bin/quickclaude.js"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node bin/quickclaude.js"
   },
   "keywords": [
     "claude",
