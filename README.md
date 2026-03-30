@@ -29,6 +29,11 @@ Or run without installing:
 npx quickclaude
 ```
 
+## Update
+```bash
+npm update -g quickclaude
+```
+
 ## How it works
 
 1. Scans `~/.claude/projects/` for Claude Code project directories
