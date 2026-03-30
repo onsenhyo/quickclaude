@@ -15,8 +15,16 @@ const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
 function resolvePath(encoded) {
   const parts = encoded.replace(/^-/, "").split("-");
   let current = sep;
-
   let i = 0;
+
+  // Windows: "C--Users-..." → drive letter "C:" 처리
+  if (parts.length >= 1 && /^[A-Za-z]$/.test(parts[0])) {
+    const drive = parts[0].toUpperCase() + ":\\";
+    if (existsSync(drive)) {
+      current = drive;
+      i = 1;
+    }
+  }
   while (i < parts.length) {
     let matched = false;
     // 긴 조합부터 시도 (mcp-overwatch, Unreal Projects 등)
