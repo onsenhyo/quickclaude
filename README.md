@@ -3,8 +3,6 @@
 CLI launcher for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 Quickly launch Claude Code in your project directories.
 
-<img width="762" height="383" alt="Screenshot 2026-03-28 at 6 25 10 PM" src="https://github.com/user-attachments/assets/4f368300-9748-4190-87c1-f2a1fcfd8a63" />
-
 ```
 $ quickclaude
 
