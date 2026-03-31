@@ -100,10 +100,12 @@ async function main() {
     process.exit(0);
   }
 
+  const args = process.argv.slice(2);
+
   p.outro(`Launching Claude in ${selected}`);
 
   // claude 실행 (현재 터미널에서 interactive하게)
-  const child = spawn("claude", [], {
+  const child = spawn("claude", args, {
     cwd: selected,
     stdio: "inherit",
     shell: true,
