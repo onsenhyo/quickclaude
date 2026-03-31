@@ -1,6 +1,6 @@
 {
   "name": "quickclaude",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "description": "Quickly launch Claude Code in your project directories",
   "type": "module",
   "bin": {

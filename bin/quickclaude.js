@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as p from "@clack/prompts";
-import { readdirSync, existsSync } from "fs";
+import { readdirSync, existsSync, statSync } from "fs";
 import { join, sep } from "path";
 import { homedir } from "os";
 import { execSync, spawn } from "child_process";
@@ -68,13 +68,33 @@ function getProjects() {
       if (p.path.includes(`claude${sep}worktrees`)) return false;
       return existsSync(p.path);
     })
-    .sort((a, b) => a.path.localeCompare(b.path));
+    .map((p) => {
+      const projectDir = join(CLAUDE_PROJECTS_DIR, p.dirName);
+      const mtime = statSync(projectDir).mtimeMs;
+      return { ...p, mtime };
+    })
+    .sort((a, b) => b.mtime - a.mtime);
 }
 
-function getProjectLabel(path) {
+function timeAgo(mtimeMs) {
+  const seconds = Math.floor((Date.now() - mtimeMs) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks}w ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
+function getProjectLabel(path, mtimeMs) {
   const home = homedir();
   const display = path.startsWith(home) ? "~" + path.slice(home.length) : path;
-  return display;
+  return `${timeAgo(mtimeMs)} · ${display}`;
 }
 
 async function main() {
@@ -91,7 +111,7 @@ async function main() {
     message: "Select a project",
     options: projects.map((proj) => ({
       value: proj.path,
-      label: getProjectLabel(proj.path),
+      label: getProjectLabel(proj.path, proj.mtime),
     })),
   });
 
