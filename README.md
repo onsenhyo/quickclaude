@@ -1,9 +1,9 @@
 # quickclaude
 
-CLI launcher for Claude Code.
+CLI launcher for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 Quickly launch Claude Code in your project directories.
-<img width="762" height="383" alt="Screenshot 2026-03-28 at 6 25 10 PM" src="https://github.com/user-attachments/assets/4f368300-9748-4190-87c1-f2a1fcfd8a63" />
 
+<img width="762" height="383" alt="Screenshot 2026-03-28 at 6 25 10 PM" src="https://github.com/user-attachments/assets/4f368300-9748-4190-87c1-f2a1fcfd8a63" />
 
 ```
 $ quickclaude
@@ -11,10 +11,28 @@ $ quickclaude
 ┌  quickclaude
 │
 ◆  Select a project
-│  ● ~/Documents/projects/my-app1
-│  ○ ~/Documents/projects/my-app2
-│  ○ ~/Documents/projects/my-app3
+│  ● 2h ago · ~/Documents/projects/my-app1
+│  ○ 3d ago · ~/Documents/projects/my-app2
+│  ○ 1w ago · ~/Documents/projects/my-app3
 └
+```
+
+## How it works
+
+Claude Code stores [auto memory](https://docs.anthropic.com/en/docs/claude-code/memory) for each project under `~/.claude/projects/`. Every time you run Claude Code in a directory, it creates a subdirectory there to save project-specific memory like build commands, debugging patterns, and architecture notes.
+
+quickclaude uses this directory structure in reverse — it scans `~/.claude/projects/` to build a list of projects you've used with Claude Code, then lets you pick one and launch `claude` right there.
+
+1. Scans `~/.claude/projects/` to discover your Claude Code projects
+2. Sorts by most recently used, with relative timestamps (e.g. `2h ago`)
+3. Shows an interactive selection menu
+4. Launches `claude` in the selected directory
+
+Any CLI arguments are forwarded to `claude`:
+
+```bash
+quickclaude --resume
+# equivalent to: cd <selected-project> && claude --resume
 ```
 
 ## Install
@@ -30,15 +48,10 @@ npx quickclaude
 ```
 
 ## Update
+
 ```bash
 npm update -g quickclaude
 ```
-
-## How it works
-
-1. Scans `~/.claude/projects/` for Claude Code project directories
-2. Shows an interactive list to pick from
-3. Launches `claude` in the selected directory
 
 ## Requirements
 
