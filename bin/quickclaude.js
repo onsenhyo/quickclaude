@@ -5,6 +5,7 @@ import { readdirSync, existsSync, statSync } from "fs";
 import { join, sep } from "path";
 import { homedir } from "os";
 import { execSync, spawn } from "child_process";
+import { fileURLToPath } from "url";
 
 const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
 
@@ -136,4 +137,8 @@ async function main() {
   });
 }
 
-main();
+export { resolvePath, timeAgo, getProjectLabel, getProjects };
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}
