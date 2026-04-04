@@ -13,31 +13,36 @@ const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
 // "-Users-seunghyunhong-Documents-projects-mcp-overwatch" 같은 경우
 // -를 /로 바꾸면 mcp/overwatch가 되어 틀려짐
 // → 파일시스템을 실제로 탐색하며 매칭
-function resolvePath(encoded) {
+function resolvePath(encoded, root = sep) {
   const parts = encoded.replace(/^-/, "").split("-");
-  let current = sep;
+  if (parts.length === 0 || (parts.length === 1 && parts[0] === "")) return null;
+  let current = root;
   let i = 0;
 
   // Windows: "C--Users-..." → drive letter "C:" 처리
-  if (parts.length >= 1 && /^[A-Za-z]$/.test(parts[0])) {
+  if (root === sep && parts.length >= 1 && /^[A-Za-z]$/.test(parts[0])) {
     const drive = parts[0].toUpperCase() + ":\\";
     if (existsSync(drive)) {
       current = drive;
       i = 1;
     }
   }
+
   while (i < parts.length) {
+    let entries;
+    try {
+      entries = new Set(readdirSync(current));
+    } catch {
+      return null;
+    }
+
     let matched = false;
-    // 긴 조합부터 시도 (mcp-overwatch, Unreal Projects 등)
     for (let len = parts.length - i; len >= 1; len--) {
       const segment = parts.slice(i, i + len);
-      // "-"와 " " 두 가지 구분자 조합을 모두 시도
-      const separators = ["-", " "];
-      for (const joiner of separators) {
+      for (const joiner of ["-", " "]) {
         const candidate = segment.join(joiner);
-        const fullPath = join(current, candidate);
-        if (existsSync(fullPath)) {
-          current = fullPath;
+        if (entries.has(candidate)) {
+          current = join(current, candidate);
           i += len;
           matched = true;
           break;
