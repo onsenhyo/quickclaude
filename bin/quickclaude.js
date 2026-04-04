@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import * as p from "@clack/prompts";
-import { readdirSync, existsSync, statSync } from "fs";
+import prompts from "prompts";
+import { readdirSync, existsSync, statSync, realpathSync } from "fs";
 import { join, sep } from "path";
 import { homedir } from "os";
-import { execSync, spawn } from "child_process";
+import { execFileSync, spawn } from "child_process";
+import { fileURLToPath } from "url";
 
 const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
 
@@ -12,31 +13,36 @@ const CLAUDE_PROJECTS_DIR = join(homedir(), ".claude", "projects");
 // "-Users-seunghyunhong-Documents-projects-mcp-overwatch" 같은 경우
 // -를 /로 바꾸면 mcp/overwatch가 되어 틀려짐
 // → 파일시스템을 실제로 탐색하며 매칭
-function resolvePath(encoded) {
+function resolvePath(encoded, root = sep) {
   const parts = encoded.replace(/^-/, "").split("-");
-  let current = sep;
+  if (parts.length === 0 || (parts.length === 1 && parts[0] === "")) return null;
+  let current = root;
   let i = 0;
 
   // Windows: "C--Users-..." → drive letter "C:" 처리
-  if (parts.length >= 1 && /^[A-Za-z]$/.test(parts[0])) {
+  if (root === sep && parts.length >= 1 && /^[A-Za-z]$/.test(parts[0])) {
     const drive = parts[0].toUpperCase() + ":\\";
     if (existsSync(drive)) {
       current = drive;
       i = 1;
     }
   }
+
   while (i < parts.length) {
+    let entries;
+    try {
+      entries = new Set(readdirSync(current));
+    } catch {
+      return null;
+    }
+
     let matched = false;
-    // 긴 조합부터 시도 (mcp-overwatch, Unreal Projects 등)
     for (let len = parts.length - i; len >= 1; len--) {
       const segment = parts.slice(i, i + len);
-      // "-"와 " " 두 가지 구분자 조합을 모두 시도
-      const separators = ["-", " "];
-      for (const joiner of separators) {
+      for (const joiner of ["-", " "]) {
         const candidate = segment.join(joiner);
-        const fullPath = join(current, candidate);
-        if (existsSync(fullPath)) {
-          current = fullPath;
+        if (entries.has(candidate)) {
+          current = join(current, candidate);
           i += len;
           matched = true;
           break;
@@ -48,6 +54,25 @@ function resolvePath(encoded) {
   }
 
   return current;
+}
+
+function getLatestMtime(dirPath) {
+  try {
+    const entries = readdirSync(dirPath, { withFileTypes: true });
+    let latest = 0;
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const mtime = statSync(join(dirPath, entry.name)).mtimeMs;
+      if (mtime > latest) latest = mtime;
+    }
+    return latest || statSync(dirPath).mtimeMs;
+  } catch {
+    try {
+      return statSync(dirPath).mtimeMs;
+    } catch {
+      return 0;
+    }
+  }
 }
 
 function getProjects() {
@@ -70,7 +95,7 @@ function getProjects() {
     })
     .map((p) => {
       const projectDir = join(CLAUDE_PROJECTS_DIR, p.dirName);
-      const mtime = statSync(projectDir).mtimeMs;
+      const mtime = getLatestMtime(projectDir);
       return { ...p, mtime };
     })
     .sort((a, b) => b.mtime - a.mtime);
@@ -98,42 +123,84 @@ function getProjectLabel(path, mtimeMs) {
 }
 
 async function main() {
-  p.intro("quickclaude");
+  console.log("\n  quickclaude\n");
 
   const projects = getProjects();
 
   if (projects.length === 0) {
-    p.cancel("No Claude projects found.");
+    console.error("  No Claude projects found.\n");
     process.exit(1);
   }
 
-  const selected = await p.select({
-    message: "Select a project",
-    options: projects.map((proj) => ({
-      value: proj.path,
-      label: getProjectLabel(proj.path, proj.mtime),
-    })),
+  const choices = projects.map((proj) => ({
+    title: getProjectLabel(proj.path, proj.mtime),
+    value: proj.path,
+  }));
+
+  const response = await prompts({
+    type: "autocomplete",
+    name: "project",
+    message: "Select a project (type to search)",
+    choices,
+    suggest: (input, choices) => {
+      if (!input) return Promise.resolve(choices);
+      const lower = input.toLowerCase();
+      return Promise.resolve(
+        choices.filter((c) => {
+          const title = c.title.toLowerCase();
+          let j = 0;
+          for (let i = 0; i < title.length && j < lower.length; i++) {
+            if (title[i] === lower[j]) j++;
+          }
+          return j === lower.length;
+        })
+      );
+    },
   });
 
-  if (p.isCancel(selected)) {
-    p.cancel("Cancelled");
+  if (!response.project) {
+    console.log("  Cancelled\n");
     process.exit(0);
   }
 
   const args = process.argv.slice(2);
 
-  p.outro(`Launching Claude in ${selected}`);
+  const whichCmd = process.platform === "win32" ? "where" : "which";
+  try {
+    execFileSync(whichCmd, ["claude"], { stdio: "ignore" });
+  } catch {
+    console.error(
+      "Error: Claude Code is not installed.\n" +
+      "Install it with: npm install -g @anthropic-ai/claude-code"
+    );
+    process.exit(1);
+  }
 
-  // claude 실행 (현재 터미널에서 interactive하게)
+  console.log(`  Launching Claude in ${response.project}\n`);
+
   const child = spawn("claude", args, {
-    cwd: selected,
+    cwd: response.project,
     stdio: "inherit",
-    shell: true,
   });
 
   child.on("exit", (code) => {
     process.exit(code ?? 0);
   });
+
+  child.on("error", (err) => {
+    console.error(`Failed to launch Claude: ${err.message}`);
+    process.exit(1);
+  });
 }
 
-main();
+export { resolvePath, timeAgo, getProjectLabel, getProjects, getLatestMtime };
+
+try {
+  if (realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+    main();
+  }
+} catch {
+  if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main();
+  }
+}

@@ -7,7 +7,8 @@
     "quickclaude": "bin/quickclaude.js"
   },
   "scripts": {
-    "start": "node bin/quickclaude.js"
+    "start": "node bin/quickclaude.js",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [
     "claude",
@@ -21,6 +22,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@clack/prompts": "^1.1.0"
+    "prompts": "^2.4.2"
   }
 }
