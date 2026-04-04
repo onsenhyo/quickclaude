@@ -46,4 +46,11 @@ describe("resolvePath", () => {
   it("returns null for empty input", () => {
     assert.equal(resolvePath("", root), null);
   });
+
+  it("skips Windows drive logic when custom root is provided", () => {
+    // "C" as first part should not be treated as drive letter when root is custom
+    mkdirSync(join(root, "C", "stuff"), { recursive: true });
+    const encoded = "-C-stuff";
+    assert.equal(resolvePath(encoded, root), join(root, "C", "stuff"));
+  });
 });

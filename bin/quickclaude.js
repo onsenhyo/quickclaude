@@ -67,7 +67,11 @@ function getLatestMtime(dirPath) {
     }
     return latest || statSync(dirPath).mtimeMs;
   } catch {
-    return statSync(dirPath).mtimeMs;
+    try {
+      return statSync(dirPath).mtimeMs;
+    } catch {
+      return 0;
+    }
   }
 }
 
@@ -188,8 +192,7 @@ try {
     main();
   }
 } catch {
-  // Direct invocation (e.g., node bin/quickclaude.js)
-  if (process.argv[1]?.endsWith("quickclaude.js")) {
+  if (process.argv[1] === fileURLToPath(import.meta.url)) {
     main();
   }
 }
