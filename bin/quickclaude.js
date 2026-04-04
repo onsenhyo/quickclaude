@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as p from "@clack/prompts";
-import { readdirSync, existsSync, statSync } from "fs";
+import { readdirSync, existsSync, statSync, realpathSync } from "fs";
 import { join, sep } from "path";
 import { homedir } from "os";
 import { execSync, spawn } from "child_process";
@@ -139,6 +139,13 @@ async function main() {
 
 export { resolvePath, timeAgo, getProjectLabel, getProjects };
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  main();
+try {
+  if (realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+    main();
+  }
+} catch {
+  // Direct invocation (e.g., node bin/quickclaude.js)
+  if (process.argv[1]?.endsWith("quickclaude.js")) {
+    main();
+  }
 }
