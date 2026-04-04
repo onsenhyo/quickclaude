@@ -56,6 +56,21 @@ function resolvePath(encoded, root = sep) {
   return current;
 }
 
+function getLatestMtime(dirPath) {
+  try {
+    const entries = readdirSync(dirPath, { withFileTypes: true });
+    let latest = 0;
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const mtime = statSync(join(dirPath, entry.name)).mtimeMs;
+      if (mtime > latest) latest = mtime;
+    }
+    return latest || statSync(dirPath).mtimeMs;
+  } catch {
+    return statSync(dirPath).mtimeMs;
+  }
+}
+
 function getProjects() {
   if (!existsSync(CLAUDE_PROJECTS_DIR)) {
     return [];
@@ -76,7 +91,7 @@ function getProjects() {
     })
     .map((p) => {
       const projectDir = join(CLAUDE_PROJECTS_DIR, p.dirName);
-      const mtime = statSync(projectDir).mtimeMs;
+      const mtime = getLatestMtime(projectDir);
       return { ...p, mtime };
     })
     .sort((a, b) => b.mtime - a.mtime);
@@ -142,7 +157,7 @@ async function main() {
   });
 }
 
-export { resolvePath, timeAgo, getProjectLabel, getProjects };
+export { resolvePath, timeAgo, getProjectLabel, getProjects, getLatestMtime };
 
 try {
   if (realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
