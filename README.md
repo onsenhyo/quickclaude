@@ -5,6 +5,16 @@ Quickly launch Claude Code in your project directories.
 
 ```
 $ quickclaude
+
+  quickclaude
+
+? Select a project (type to search) »
+>   just now · ~/projects/my-portfolio
+    3h ago   · ~/work/customer-portal
+    1d ago   · ~/dev/api-server
+    3d ago   · ~/code/dashboard-app
+    1w ago   · ~/projects/react-notes
+  ↓ 2w ago   · ~/code/weather-cli
 ```
 
 
