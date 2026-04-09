@@ -174,6 +174,7 @@ async function main() {
     searchKey: getSearchKey(proj.path),
   }));
 
+  let cancelled = false;
   const response = await prompts(
     {
       type: "autocomplete",
@@ -186,16 +187,20 @@ async function main() {
           choices.filter((c) => fuzzyMatch(input, c.searchKey))
         );
       },
+      onState: (state) => {
+        if (state.aborted || state.exited) {
+          cancelled = true;
+        }
+      },
     },
     {
       onCancel: () => {
-        console.log("  Cancelled\n");
-        process.exit(0);
+        cancelled = true;
       },
     }
   );
 
-  if (!response.project) {
+  if (cancelled || !response.project) {
     console.log("  Cancelled\n");
     process.exit(0);
   }
